@@ -130,6 +130,7 @@ class BPFactory {
         my_map.emplace("saturating_one_bit", std::make_unique<BPCreator<BPEntryOneBit>>());
         my_map.emplace("saturating_two_bits", std::make_unique<BPCreator<BPEntryTwoBit>>());
         my_map.emplace("adaptive_two_levels", std::make_unique<BPCreator<BPEntryAdaptive<2>>>());
+        my_map.emplace("saturating_three_bits", std::make_unique<BPCreator<BPEntryThreeBits>>());
         return my_map;
     }
 

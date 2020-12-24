@@ -206,4 +206,89 @@ public:
     }
 };
 
+class BPEntryThreeBits
+{
+public:
+    class State
+    {
+        enum class StateValue
+        {
+            SN   = 0, // NOT TAKEN
+            WN1  = 1, // SICKLY NOT TAKEN
+            WN2  = 2, // WEAKLY NOT TAKEN
+            WN3 = 3, // SICKLY WEAKLY NOT TAKEN
+            WT1   = 4, // WEAKLY TAKEN
+            WT2  = 5, // SICKLY WEAKLY TAKEN
+            WT3   = 6, // SICKLY TAKEN
+            ST    = 7  // TAKEN
+        };
+
+        static const StateValue default_value = StateValue::WN3;
+        StateValue value = default_value;
+
+    public:
+        /* updating state */
+        void update ( bool is_taken)
+        {
+            if ( is_taken)
+            {
+                switch ( value)
+                {
+                    case StateValue::SN:  value = StateValue::WN1; break; // 0
+                    case StateValue::WN1:  value = StateValue::WN2; break;
+                    case StateValue::WN2: value = StateValue::WN3;  break;
+                    case StateValue::WN3: value = StateValue::WT1;  break;
+                    case StateValue::WT1: value = StateValue::WT2;  break;
+                    case StateValue::WT2: value = StateValue::WT3;  break;
+                    case StateValue::WT3:  /* fallthrough */
+                    case StateValue::ST:   value = StateValue::ST;   break; // saturation
+                }
+            }
+            else
+            {
+                switch ( value)
+                {
+                    case StateValue::SN:  /* fallthrough, saturation */
+                    case StateValue::WN1: value = StateValue::SN;  break;
+                    case StateValue::WN2:  value = StateValue::WN1; break;
+                    case StateValue::WN3:   value = StateValue::WN2;  break;
+                    case StateValue::WT1: value = StateValue::WN3;  break;
+                    case StateValue::WT2:  value = StateValue::WT1; break;
+                    case StateValue::WT3:   value = StateValue::WT2;  break;
+                    case StateValue::ST:   value = StateValue::WT3;  break;
+                }
+            }
+        }
+
+        /* casting to result */
+        bool is_taken() const
+        {
+            return value == StateValue::WT1 || value == StateValue::WT2 || value == StateValue::WT3 || value == StateValue::ST ;
+        }
+
+        void reset() { value = default_value; }
+    };
+
+private:
+    State state = {};
+
+public:
+    /* prediction */
+    bool is_taken( Addr /* unused */, Addr /* target */) const
+    {
+        return state.is_taken();
+    }
+
+    /* update */
+    void update( bool is_taken)
+    {
+        state.update( is_taken);
+    }
+
+    void reset()
+    {
+        state.reset();
+    }
+};
+
 #endif
